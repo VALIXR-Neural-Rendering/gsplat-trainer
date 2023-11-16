@@ -1,17 +1,14 @@
 import sys
 from contextlib import contextmanager
 import numpy as np
-import torch
 import math
 import glm
 import timeit as tt
 
-from torch import Tensor, ByteTensor
+import torch
 import torch.nn.functional as F
-from torch.autograd import Variable
 
 import pycuda.driver
-from pycuda.gl import graphics_map_flags
 
 from glumpy import app, gloo, gl
 
@@ -59,7 +56,7 @@ class GLWindow:
         
         state = self.renderer.render(view)
         tensor = torch.cat((state/255, torch.ones_like(state[:,:,:1])), dim=2)
-        tensor = (255*tensor).byte().contiguous() # convert to ByteTensor
+        tensor = (255*tensor).byte().contiguous() # convert t
         # copy from torch into buffer
         # pdb.set_trace()
         assert tex.nbytes == tensor.numel()*tensor.element_size()
@@ -138,21 +135,7 @@ class Window(QtWidgets.QMainWindow):
         ssize = self.ssize_sl.value()
         gaussr.set_splat_size(ssize)
 
-def setup():
-    global screen, cuda_buffer, state
-    # setup pycuda and torch
-    import pycuda.gl.autoinit
-    import pycuda.gl
-    assert torch.cuda.is_available()
-    print('using GPU {}'.format(torch.cuda.current_device()))
-    # torch.nn layers expect batch_size, channels, height, width
-    state = torch.cuda.FloatTensor(1,3,args.img_height,args.img_width)
-    # create a buffer with pycuda and gloo views
-    # tex, cuda_buffer = create_shared_texture(args.img_width, args.img_height, 4)
-    tex, cuda_buffer = create_shared_texture(
-                np.zeros((args.img_height, args.img_width, 4), np.uint8)
-            )
-    # create a shader to program to draw to the screen
+def get_shader_program(texture):
     vertex = """
     uniform float scale;
     attribute vec2 position;
@@ -176,7 +159,25 @@ def setup():
     screen['position'] = [(-1,-1), (-1,+1), (+1,-1), (+1,+1)]
     screen['texcoord'] = [(0,0), (0,1), (1,0), (1,1)]
     screen['scale'] = 1.0
-    screen['tex'] = tex
+    screen['tex'] = texture
+
+    return screen
+
+def setup():
+    global screen, cuda_buffer, state
+    # setup pycuda and torch
+    import pycuda.gl.autoinit
+    import pycuda.gl
+    assert torch.cuda.is_available()
+    print('using GPU {}'.format(torch.cuda.current_device()))
+    # torch.nn layers expect batch_size, channels, height, width
+    state = torch.cuda.FloatTensor(1,3,args.img_height,args.img_width)
+    # create a buffer with pycuda and gloo views
+    tex, cuda_buffer = create_shared_texture(
+                np.zeros((args.img_height, args.img_width, 4), np.uint8)
+            )
+    # create a shader to program to draw to the screen
+    screen = get_shader_program(tex)
 
 
 if __name__=='__main__':
