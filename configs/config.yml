@@ -1,0 +1,33 @@
+# Renderer parameters
+img_width: 1608
+img_height: 976
+# img_width: 1024
+# img_height: 1024
+fovx: 60
+fovy: 60
+near: 1
+far: 1000000000
+bg_color: [0, 0, 0]
+scale_factor: 1
+stretch_factor: 350
+stretch_dim: 2   # 0: x, 1: y, 2: z
+viz_flow: true
+
+# Transfer fn parameters
+rmin: -20
+rmax: 20
+control_vals: [-7.0, -3.5, 3.5, 7.0]
+opacity: [1.0, 0, 0, 1.0]
+viz_var: ['vel']
+
+# Scene params
+nc_path: 'C:\UMD\render_pc\data\nasa\hurricane_sim\data_08\particles_008_hd.nc4'
+# nc_path: 'C:\UMD\render_pc\data\nasa\hurricane_sim\data_08\particles_008.nc4'
+# nc_path: 'C:\UMD\render_pc\data\nasa\pts_new.las'
+# nc_path: 'C:\UMD\render_pc\data\nasa\hurricane_hd.las'
+# nc_path: 'C:\UMD\render_pc\data\nasa\hurricane.las'
+# nc_path: 'C:\UMD\render_pc\data\MorroBay\morro_bay_morton_5M.las'
+view_path: 'C:\UMD\render_pc\data\nasa\hurricane\view_.txt'
+
+prefiltered: false
+debug: false
