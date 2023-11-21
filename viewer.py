@@ -190,6 +190,7 @@ if __name__=='__main__':
     window = GLWindow(args, gaussr, tball)
 
     appl = QApplication([])
+    appl.setStyleSheet('.QLabel { font-size: 14pt;}')
     main_window = Window(args, window)
     main_window.create_layout()
     main_window.show()

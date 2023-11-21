@@ -1,6 +1,6 @@
 # Renderer parameters
-img_width: 1608
-img_height: 976
+img_width: 2900 #1608
+img_height: 1800 #976
 # img_width: 1024
 # img_height: 1024
 fovx: 60
