@@ -1,0 +1,31 @@
+# Renderer parameters
+img_width: 1024
+img_height: 1024
+fovx: 60
+fovy: 60
+near: 0.1
+far: 200000
+
+bg_color: [0, 0, 0]
+scale_factor: 0.001
+stretch_factor: 200
+stretch_dim: 1   # 0: x, 1: y, 2: z
+viz_flow: true
+
+# Transfer fn parameters
+rmin: 9.218586
+rmax: 17.613117
+control_vals: [9.25, 15.5, 15.6, 17.6]
+opacity: [1.0, 0, 0, 1.0]
+viz_var: ['PAlt']
+colmap: 'terrain'
+
+# Transfer fn parameters
+colorize: true
+
+# Scene params
+nc_path: 'C:\UMD\render_pc\data\nasa\storms_2x.nc4'
+view_path: 'C:\UMD\render_pc\data\nasa\storms\view.txt'
+
+prefiltered: false
+debug: false

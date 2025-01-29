@@ -1,12 +1,6 @@
 import sys
-from contextlib import contextmanager
 import numpy as np
-import math
-import glm
-import timeit as tt
-
 import torch
-import torch.nn.functional as F
 
 import pycuda.driver
 
@@ -19,18 +13,19 @@ from utils.renderer import parse_args, print_args, GSplatRenderer, read_netCDF
 from utils.gpu_utils import create_shared_texture, cpy_tensor_to_texture
 from utils.trackball import Trackball
 
-import pdb
-
 
 args = parse_args()
 
 # create window with OpenGL context
-app.use('qt5')
+app.use("qt5")
+
 
 class GLWindow:
     def __init__(self, args, renderer, tball):
         self.args = args
-        self.glumpy_window = app.Window(args.img_width, args.img_height, fullscreen=False)
+        self.glumpy_window = app.Window(
+            args.img_width, args.img_height, fullscreen=False
+        )
         self.glumpy_window.set_title("Test")
 
         self.renderer = renderer
@@ -43,25 +38,26 @@ class GLWindow:
         self.glumpy_window.push_handlers(on_mouse_scroll=self.on_mouse_scroll)
 
     def set_position(self, x, y):
-        self.glumpy_window.set_position(x,y)
+        self.glumpy_window.set_position(x, y)
 
     def on_init(self):
         pass
 
     def on_draw(self, dt):
-        global state
-        tex = screen['tex']
-        h,w = tex.shape[:2]
+        global state_rgb, state_depth
+        tex = screen["tex"]
+        h, w = tex.shape[:2]
         view = tball.pose
-        
-        state = self.renderer.render(view)
-        tensor = torch.cat((state/255, torch.ones_like(state[:,:,:1])), dim=2)
-        tensor = (255*tensor).byte().contiguous() # convert t
+
+        state_rgb, state_depth = self.renderer.render(view, False)
+        tensor = torch.cat(
+            (state_rgb / 255, torch.ones_like(state_rgb[:, :, :1])), dim=2
+        )
+        tensor = (255 * tensor).byte().contiguous()  # convert t
         # copy from torch into buffer
-        # pdb.set_trace()
-        assert tex.nbytes == tensor.numel()*tensor.element_size()
-        
-        cpy_tensor_to_texture(tensor, cuda_buffer, tex.nbytes//h)
+        assert tex.nbytes == tensor.numel() * tensor.element_size()
+
+        cpy_tensor_to_texture(tensor, cuda_buffer, tex.nbytes // h)
         # draw to screen
         self.glumpy_window.clear()
         screen.draw(gl.GL_TRIANGLE_STRIP)
@@ -70,23 +66,24 @@ class GLWindow:
         self.tball.down((x, y))
 
     def on_mouse_drag(self, x, y, dx, dy, button):
-        self.tball.drag((x+dx, y+dy))
+        self.tball.drag((x + dx, y + dy))
 
     def on_mouse_scroll(self, x, y, dx, dy):
-        self.tball.scroll(dy*40)
+        self.tball.scroll(dy * 40)
 
     @property
     def _native_window(self):
         return self.glumpy_window._native_window
+
 
 class Window(QtWidgets.QMainWindow):
     def __init__(self, args, window):
         super().__init__()
         self.args = args
         self.window = window
-        
+
         self.resize(args.img_width + 200, args.img_height)
-        self.move(0,0)
+        self.move(0, 0)
 
     def create_layout(self):
         self.central_widget = QtWidgets.QWidget(self)
@@ -95,7 +92,7 @@ class Window(QtWidgets.QMainWindow):
         self.horizontal_layout.addLayout(self.vertical_layout, stretch=0)
         self.setCentralWidget(self.central_widget)
 
-        self.window.set_position(0,0)
+        self.window.set_position(0, 0)
         self.horizontal_layout.addWidget(self.window._native_window, stretch=1)
 
         # Stretch control
@@ -135,6 +132,7 @@ class Window(QtWidgets.QMainWindow):
         ssize = self.ssize_sl.value()
         gaussr.set_splat_size(ssize)
 
+
 def get_shader_program(texture):
     vertex = """
     uniform float scale;
@@ -156,45 +154,47 @@ def get_shader_program(texture):
     # Build the program and corresponding buffers (with 4 vertices)
     screen = gloo.Program(vertex, fragment, count=4)
     # Upload data into GPU
-    screen['position'] = [(-1,-1), (-1,+1), (+1,-1), (+1,+1)]
-    screen['texcoord'] = [(0,0), (0,1), (1,0), (1,1)]
-    screen['scale'] = 1.0
-    screen['tex'] = texture
+    screen["position"] = [(-1, -1), (-1, +1), (+1, -1), (+1, +1)]
+    screen["texcoord"] = [(0, 0), (0, 1), (1, 0), (1, 1)]
+    screen["scale"] = 1.0
+    screen["tex"] = texture
 
     return screen
 
+
 def setup():
-    global screen, cuda_buffer, state
+    global screen, cuda_buffer, state_rgb, state_depth
     # setup pycuda and torch
     import pycuda.gl.autoinit
-    import pycuda.gl
+
     assert torch.cuda.is_available()
-    print('using GPU {}'.format(torch.cuda.current_device()))
+    print("using GPU {}".format(torch.cuda.current_device()))
     # torch.nn layers expect batch_size, channels, height, width
-    state = torch.cuda.FloatTensor(1,3,args.img_height,args.img_width)
+    state_rgb = torch.cuda.FloatTensor(1, 3, args.img_height, args.img_width)
+    state_depth = torch.cuda.FloatTensor(args.img_height, args.img_width)
     # create a buffer with pycuda and gloo views
     tex, cuda_buffer = create_shared_texture(
-                np.zeros((args.img_height, args.img_width, 4), np.uint8)
-            )
+        np.zeros((args.img_height, args.img_width, 4), np.uint8)
+    )
     # create a shader to program to draw to the screen
     screen = get_shader_program(tex)
 
 
-if __name__=='__main__':
+if __name__ == "__main__":
     print_args(args)
-    
+
     pcdata = read_netCDF(args)
     gaussr = GSplatRenderer(args, pcdata)
     init_view = np.loadtxt(args.view_path).reshape(-1, 4, 4)[-1]
-    tball = Trackball(init_view,(args.img_width,args.img_height),1)
+    tball = Trackball(init_view, (args.img_width, args.img_height), 1)
     window = GLWindow(args, gaussr, tball)
 
     appl = QApplication([])
-    appl.setStyleSheet('.QLabel { font-size: 14pt;}')
+    appl.setStyleSheet(".QLabel { font-size: 14pt;}")
     main_window = Window(args, window)
     main_window.create_layout()
     main_window.show()
-    
+
     setup()
     app.run()
     pycuda.gl.autoinit.context.pop()
