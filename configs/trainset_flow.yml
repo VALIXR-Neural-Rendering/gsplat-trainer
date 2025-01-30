@@ -1,8 +1,8 @@
 # With flow viz.
 
 # Renderer parameters
-img_width: 512
-img_height: 512
+img_width: 1000
+img_height: 1000
 # img_width: 2000 #1808
 # img_height: 1328 #976
 fovx: 60

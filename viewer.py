@@ -81,6 +81,7 @@ class Window(QtWidgets.QMainWindow):
         super().__init__()
         self.args = args
         self.window = window
+        self.setWindowTitle("GSplat Viewer")
 
         self.resize(args.img_width + 200, args.img_height)
         self.move(0, 0)
