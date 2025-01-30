@@ -144,3 +144,5 @@ dmypy.json
 # Logging Folders
 output/
 
+# Project files
+pycuda/
