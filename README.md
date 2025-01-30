@@ -1,7 +1,7 @@
 Gaussian Splatting Based High-Quality Image Batch Generator
 ============================================================
 
-<video width="60%" src="./docs/gsplat_viewer.mp4" controls></video>
+<img width="60%" src="./docs/gsplat_viewer.gif">
 
 This repository implements differentiable Gaussian Splatting renderer based on the [original codebase](https://github.com/graphdeco-inria/diff-gaussian-rasterization). The repository provides scripts to render high-quality renderings of point clouds in batches which is useful for creating training datasets for many neural rendering tasks. The codebase also provides a visualizer which, although inefficient, provides a quick and dirty visualizations of the input point clouds under different parameter selections such as size and anisotropic stretch of splats.
 
